@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "realtime-chat-sb",
-    "slug": "realtime-chat-sb",
+    "slug": "realtime-chat",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -34,6 +34,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "55501548-4f81-46fc-91d2-e5d4a7bc92c6"
+      }
+    },
+    "owner": "gwilliamnn"
   }
 }
