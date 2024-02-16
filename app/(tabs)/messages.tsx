@@ -11,35 +11,9 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import EditScreenInfo from "@/components/EditScreenInfo"
 import { Text, View } from "@/components/Themed"
 import { Stack, useLocalSearchParams } from "expo-router"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/utils/supabase"
 import { RealtimePostgresInsertPayload } from "@supabase/supabase-js"
-
-const mockMessages = [
-	{
-		id: 1,
-		sender_id: 2,
-		sender_name: "John Doe",
-		sender_phone: "123-456-7890",
-		receiver_id: 1,
-		receiver_name: "Jane Doe",
-		receiver_phone: "098-765-4321",
-		message: "Hi there!",
-	},
-	{
-		id: 2,
-		sender_id: 1,
-		sender_name: "Jane Doe",
-		sender_phone: "098-765-4321",
-		receiver_id: 2,
-		receiver_name: "John Doe",
-		receiver_phone: "123-456-7890",
-		message: "Hello!",
-	},
-	// Add more messages as needed
-]
-
-const currentUser = { id: 1, name: "Jane Doe", phone: "098-765-4321" }
 
 type User = Database["public"]["Views"]["app_users"]["Row"]
 type Message = Omit<
@@ -52,6 +26,7 @@ type Message = Omit<
 
 export default function TabTwoScreen() {
 	const { to } = useLocalSearchParams()
+	const flatListRef = useRef<FlatList>(null)
 
 	const [currentUser, setCurrentUser] = useState<User | null>(null)
 	const [receiver, setReceiver] = useState<User | null>(null)
@@ -125,6 +100,10 @@ export default function TabTwoScreen() {
 		})
 	}, [to, currentUser?.id])
 
+	useEffect(() => {
+		// flatListRef.current?.scr({ animated: true })
+	}, [messages.length])
+
 	const sendMessage = async () => {
 		if (!inputText) return
 
@@ -145,15 +124,7 @@ export default function TabTwoScreen() {
 				},
 			])
 
-			console.log({
-				id: "sending",
-				sender_id: currentUser?.id as string,
-				receiver_id: to as string,
-				message: inputText,
-				type: "text",
-				sent_on: new Date().toISOString(),
-				sending: true,
-			})
+			flatListRef.current?.scrollToEnd({ animated: true })
 
 			const { data, error } = await supabase.from("messages").insert([
 				{
@@ -175,8 +146,6 @@ export default function TabTwoScreen() {
 			console.error("Error sending message", error)
 		} finally {
 			setSending(false)
-			// const newMessages = messages.filter((message) => message.id !== "sending")
-			// setMessages(newMessages)
 		}
 	}
 
@@ -244,15 +213,15 @@ export default function TabTwoScreen() {
 				return
 			}
 
-			const newMessages = [...messages, payload.new]
-				.filter((message) => message.id !== "sending")
-				.sort(
-					(a, b) =>
-						new Date(a.sent_on ?? 0).getTime() -
-						new Date(b.sent_on ?? 0).getTime()
-				)
-
-			setMessages(newMessages)
+			setMessages((m) =>
+				[...m, { ...payload.new }]
+					.filter((m) => !m.sending)
+					.sort(
+						(a, b) =>
+							new Date(a.sent_on ?? 0).getTime() -
+							new Date(b.sent_on ?? 0).getTime()
+					)
+			)
 		}
 	}
 
@@ -277,8 +246,13 @@ export default function TabTwoScreen() {
 		>
 			<Text style={styles.header}>{receiver?.name}</Text>
 			<FlatList
+				ref={flatListRef}
 				data={messages}
 				keyExtractor={(item) => item.id.toString()}
+				onContentSizeChange={() =>
+					flatListRef.current?.scrollToEnd({ animated: false })
+				}
+				contentContainerStyle={{ paddingBottom: 40 }}
 				renderItem={({ item }) => (
 					<View
 						style={[

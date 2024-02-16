@@ -5,9 +5,9 @@ import { View } from "@/components/Themed"
 import { router } from "expo-router"
 
 export default function SignIn() {
-	const [phoneNum, setPhoneNum] = useState("19549940000")
+	const [phoneNum, setPhoneNum] = useState("")
 	const [submitted, setSubmitted] = useState(false)
-	const [otp, setOtp] = useState("000000")
+	const [otp, setOtp] = useState("")
 
 	const handlePhoneSignIn = async () => {
 		try {
